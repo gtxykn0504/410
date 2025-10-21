@@ -19,7 +19,7 @@ export default function RandomImagePage() {
     
     try {
       const timestamp = new Date().getTime()
-      const url = `https://api.spircape.com/random-410?t=${timestamp}`
+      const url = `https://api.spircape.com/random-410`
       setImageUrl(url)
     } catch (err) {
       setError("加载失败，请重试")
@@ -77,9 +77,9 @@ export default function RandomImagePage() {
         </div>
 
         {/* Image Container */}
-        <div className="bg-gray-50 rounded-2xl overflow-hidden border-2 border-gray-200 shadow-lg mb-6">
+        <div className="bg-gray-50 rounded-sm overflow-hidden border-2 border-gray-200 shadow-lg mb-6">
           {/* Image Display */}
-          <div className="aspect-video bg-gray-100 flex items-center justify-center">
+          <div className="aspect-video bg-gray-100 flex items-center justify-center max-w-full max-h-[600px]" style={{ maxWidth: '90vw' }}>
             {!imageUrl && !error ? (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <div className="w-16 h-16 mb-4 bg-gray-200 rounded-full animate-pulse" />
@@ -138,7 +138,7 @@ export default function RandomImagePage() {
             disabled={isLoading}
             className="flex items-center gap-2 px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
-            <RefreshCw className={["w-5", "h-5", isLoading && "animate-spin"].filter(Boolean).join(" ")} />
+            <RefreshCw className={["w-5", "h-5"].filter(Boolean).join(" ")} />
             <span className="font-medium">刷新</span>
           </button>
         </div>

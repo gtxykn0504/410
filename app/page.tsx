@@ -20,7 +20,7 @@ export default function HomePage() {
           {[
             { href: "/log", label: "Log" },
             { href: "https://410report.ofhe.cn/", label: "Report" },
-            { href: "mailto:i@zhhe.dev", label: "Contact" },
+            { href: "/random", label: "Random" },
           ].map((item) => (
             <Link
               key={item.href}

@@ -93,10 +93,10 @@ export default async function LogPostPage({ params }: LogPageProps) {
         </aside>
 
         {/* 主内容区 */}
-        <main className="flex-1 lg:ml-80 pt-10">
-          <article className="max-w-2xl mx-auto px-4 sm:px-6 lg:pt-5 px-8 py-8 sm:py-12 lg:py-16">
+        <main className="flex-1 lg:ml-80 pt-8 pb-12">
+          <article className="max-w-2xl mx-auto px-5 sm:px-6 py-6 sm:py-10 lg:py-12">
             {/* 文章头部 */}
-            <header className="mb-12">
+            <header className="mb-8">
               <Link 
                 href="/"
                 className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-6"
@@ -111,10 +111,10 @@ export default async function LogPostPage({ params }: LogPageProps) {
             </header>
 
             {/* 文章内容 */}
-            <div className="prose prose-gray max-w-none">
+            <div className="prose prose-gray max-w-none mb-8">
               <BlogPostContent content={post.content} title={post.title} />
             </div>
-            <div className="max-w-3xl mx-auto mt-6 sm:mt-8 bg-white pt-8">
+            <div className="max-w-3xl mx-auto mt-6 bg-white pt-8">
               <ArtalkComment path={`/log/${post.slug}`} title={post.title} className="min-h-[300px] sm:min-h-[400px]" />
             </div>
           </article>

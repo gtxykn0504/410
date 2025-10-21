@@ -1,0 +1,158 @@
+// app/random-image/page.tsx
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { RefreshCw, ZoomIn, ArrowLeft} from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
+import { Lightbox } from "@/components/lightbox"
+
+export default function RandomImagePage() {
+  const [imageUrl, setImageUrl] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
+  const fetchRandomImage = useCallback(async (isInitial = false) => {
+    if (!isInitial) setIsLoading(true)
+    setError("")
+    
+    try {
+      const timestamp = new Date().getTime()
+      const url = `https://api.spircape.com/random-410?t=${timestamp}`
+      setImageUrl(url)
+    } catch (err) {
+      setError("加载失败，请重试")
+      console.error("Failed to load image:", err)
+      setIsLoading(false)
+    }
+  }, [])
+
+  const handleImageLoad = () => {
+    setIsLoading(false)
+  }
+
+  const handleImageError = () => {
+    setError("加载失败，请重试")
+    setIsLoading(false)
+  }
+
+  const handleRefresh = () => {
+    fetchRandomImage()
+  }
+
+  const handleZoom = () => {
+    if (imageUrl && !isLoading && !error) {
+      setLightboxOpen(true)
+    }
+  }
+
+  // 初次加载时获取图片
+  useEffect(() => {
+    fetchRandomImage(true)
+  }, [fetchRandomImage])
+
+  return (
+    <main className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="max-w-4xl w-full">
+        {/* 返回主页按钮 */}
+        <Link 
+            href="/"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-6"
+        >
+            <ArrowLeft className="w-4 h-4" />
+            <span>返回主页</span>
+        </Link>
+
+        {/* 标题区域 */}
+        <div className="mb-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <div className="w-12 h-1 bg-blue-500 rounded-full" />
+              <h1 className="text-3xl font-semibold text-gray-900">随机图片</h1>
+              <div className="w-12 h-1 bg-blue-500 rounded-full" />
+            </div>
+            <p className="text-gray-500">刷新获取一张新的随机图片</p>
+          </div>
+        </div>
+
+        {/* Image Container */}
+        <div className="bg-gray-50 rounded-2xl overflow-hidden border-2 border-gray-200 shadow-lg mb-6">
+          {/* Image Display */}
+          <div className="aspect-video bg-gray-100 flex items-center justify-center">
+            {!imageUrl && !error ? (
+              <div className="flex flex-col items-center justify-center text-gray-400">
+                <div className="w-16 h-16 mb-4 bg-gray-200 rounded-full animate-pulse" />
+                <p className="text-lg">加载中...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center text-gray-400">
+            
+                <p className="text-lg mb-4">{error}</p>
+                <button
+                  onClick={handleRefresh}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg transition-colors"
+                >
+                  重试
+                </button>
+              </div>
+            ) : (
+              <div className="relative w-full h-full">
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-5">
+                    <div className="text-center">
+                      <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">加载中...</p>
+                    </div>
+                  </div>
+                )}
+                <Image
+                  src={imageUrl}
+                  alt="随机图片"
+                  fill
+                  className={`object-contain transition-opacity duration-300 ${
+                    isLoading ? "opacity-0" : "opacity-100"
+                  }`}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  priority
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Control Buttons - Below Image */}
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={handleZoom}
+            disabled={!imageUrl || isLoading || !!error}
+            className="flex items-center gap-2 px-6 py-3 text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+          >
+            <ZoomIn className="w-5 h-5" />
+            <span className="font-medium">放大</span>
+          </button>
+          
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+          >
+            <RefreshCw className={["w-5", "h-5", isLoading && "animate-spin"].filter(Boolean).join(" ")} />
+            <span className="font-medium">刷新</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Lightbox */}
+      {imageUrl && (
+        <Lightbox
+          images={[imageUrl]}
+          currentIndex={0}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+    </main>
+  )
+}

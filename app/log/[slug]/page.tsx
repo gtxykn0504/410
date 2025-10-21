@@ -114,7 +114,7 @@ export default async function LogPostPage({ params }: LogPageProps) {
             <div className="prose prose-gray max-w-none">
               <BlogPostContent content={post.content} title={post.title} />
             </div>
-            <div className="mt-6 sm:mt-8 bg-white rounded-xl p-4 md:p-8 border border-gray-100 -mx-4 md:mx-0 rounded-none md:rounded-xl">
+            <div className="max-w-3xl mx-auto mt-6 sm:mt-8 bg-white pt-8">
               <ArtalkComment path={`/log/${post.slug}`} title={post.title} className="min-h-[300px] sm:min-h-[400px]" />
             </div>
           </article>

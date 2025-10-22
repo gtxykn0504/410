@@ -6,7 +6,7 @@ export default function HomePage() {
     {
       name: "Report",
       description: "每日总结文案生成器",
-      href: "/report",
+      href: "https://410report.ofhe.cn/",
       icon: FileText,
     },
     {
@@ -24,7 +24,7 @@ export default function HomePage() {
   ]
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white px-6 pt-20 sm:pt-0">
+    <main className="min-h-screen flex items-center justify-center bg-white px-6 pt-20 sm:pt-0 pb-20 sm:pb-0">
       <div className="max-w-2xl w-full">
         {/* Title Section */}
         <div className="space-y-4 mb-12 text-left">

@@ -167,7 +167,7 @@ export default function RandomImagePage() {
             disabled={isLoading}
             className="flex items-center justify-center gap-2 px-4 py-3 sm:px-6 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
-            <RefreshCw className={["w-4 h-4", "sm:w-5 sm:h-5", isLoading && "animate-spin"].filter(Boolean).join(" ")} />
+            <RefreshCw className={["w-4 h-4", "sm:w-5 sm:h-5"].filter(Boolean).join(" ")} />
             <span className="font-medium text-sm sm:text-base">刷新</span>
           </button>
         </div>

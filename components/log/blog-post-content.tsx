@@ -125,7 +125,7 @@ export function BlogPostContent({ content, title }: BlogPostContentProps) {
             img: ({ src, alt }) => (
               <span className="flex flex-col items-center my-8 block">
                 <img
-                  src={src || "/placeholder.svg"}
+                  src={src}
                   alt={alt}
                   className="cursor-pointer rounded-lg border border-gray-200 max-w-full h-auto hover:border-gray-300 transition-colors"
                 />

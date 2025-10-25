@@ -52,7 +52,7 @@ export function LogNavMobile({ posts }: LogNavMobileProps) {
       {/* Enhanced Floating menu button */}
       <button
         onClick={toggleMenu}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-700 hover:shadow-xl transition-all duration-300 group"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-black text-white shadow-lg border border-gray-200 flex items-center justify-center hover:shadow-xl transition-all duration-300 group"
         aria-label={isOpen ? "关闭日志导航" : "显示日志导航"}
       >
         <div className={cn(

@@ -3,11 +3,11 @@ import path from "path"
 import matter from "gray-matter"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { BlogPostContent } from "@/components/blog-post-content"
-import { LogSidebar } from "@/components/log-sidebar"
-import { LogNavMobile } from "@/components/log-nav-mobile"
+import { BlogPostContent } from "@/components/log/blog-post-content"
+import { LogSidebar } from "@/components/log/log-sidebar"
+import { LogNavMobile } from "@/components/log/log-nav-mobile"
 import { ArrowLeft } from "lucide-react"
-import { ArtalkComment } from "@/components/artalk-comment"
+import { ArtalkComment } from "@/components/log/artalk-comment"
 
 interface LogPageProps {
   params: Promise<{

@@ -1,27 +1,46 @@
 import Link from "next/link"
-import { FileText, Shuffle, Menu } from "lucide-react"
+import { FileText, Camera, Menu } from "lucide-react"
+import { PhotoDialog } from "@/components/photo-dialog"
 
 export default function HomePage() {
-  const projects = [
-    {
-      name: "Report",
-      description: "每日总结文案生成器",
-      href: "https://410report.ofhe.cn/",
-      icon: FileText,
-    },
-    {
-      name: "Random",
-      description: "随机图片",
-      href: "/random",
-      icon: Shuffle,
-    },
-    {
-      name: "Log",
-      description: "班级日志",
-      href: "/log",
-      icon: Menu,
-    }
-  ]
+  // 单个项目组件定义
+  const ReportProject = () => (
+    <Link
+      href="https://410report.ofhe.cn/"
+      className="group bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md"
+    >
+      <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+        <FileText className="w-8 h-8 mb-3" />
+        <h3 className="font-medium text-gray-900 mb-1">Report</h3>
+        <p className="text-gray-600 text-sm">每日总结文案生成器</p>
+      </div>
+    </Link>
+  )
+
+  const ContactProject = () => (
+    <PhotoDialog>
+      <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md cursor-pointer">
+        <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+          <Camera className="w-8 h-8 mb-3" />
+          <h3 className="font-medium text-gray-900 mb-1">Photo</h3>
+          <p className="text-gray-600 text-sm">图片服务</p>
+        </div>
+      </div>
+    </PhotoDialog>
+  )
+
+  const LogProject = () => (
+    <Link
+      href="/log"
+      className="group bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md"
+    >
+      <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+        <Menu className="w-8 h-8 mb-3" />
+        <h3 className="font-medium text-gray-900 mb-1">Log</h3>
+        <p className="text-gray-600 text-sm">班级日志</p>
+      </div>
+    </Link>
+  )
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-white px-6 pt-20 sm:pt-0 pb-20 sm:pb-0">
@@ -38,29 +57,16 @@ export default function HomePage() {
         </div>
 
         {/* Projects Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-          {projects.map((project) => (
-            <Link
-              key={project.name}
-              href={project.href}
-              className="group bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md"
-            >
-              <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-                <project.icon className="w-8 h-8 mb-3" />
-                <h3 className="font-medium text-gray-900 mb-1">{project.name}</h3>
-                <p className="text-gray-600 text-sm">{project.description}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Status */}
-        <div className="text-left">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            All Systems Operational
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+            {/* Report Project */}
+            <ReportProject />
+            
+            {/* Contact Project */}
+            <ContactProject />
+            
+            {/* Log Project */}
+            <LogProject />
           </div>
-        </div>
       </div>
     </main>
   )

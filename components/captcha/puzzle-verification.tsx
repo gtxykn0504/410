@@ -23,14 +23,12 @@ export default function PuzzleVerification({ onComplete }: PuzzleVerificationPro
   const [selectedTiles, setSelectedTiles] = useState<number[]>([])
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadPuzzle()
   }, [])
 
   const loadPuzzle = () => {
-    setLoading(true)
     try {
       // 直接导入数据，避免客户端 fetch 请求
       import('../../data/puzzle.json')
@@ -46,14 +44,16 @@ export default function PuzzleVerification({ onComplete }: PuzzleVerificationPro
           setError("")
         })
         .catch((err) => {
-          setError("Failed to load puzzle")
+          setError("加载拼图失败")
           console.error(err)
+          // 3秒后自动清除错误
+          setTimeout(() => setError(""), 3000)
         })
     } catch (err) {
-      setError("Failed to load puzzle")
+      setError("加载拼图失败")
       console.error(err)
-    } finally {
-      setLoading(false)
+      // 3秒后自动清除错误
+      setTimeout(() => setError(""), 3000)
     }
   }
 
@@ -77,8 +77,10 @@ export default function PuzzleVerification({ onComplete }: PuzzleVerificationPro
       setError("")
       setTimeout(() => onComplete(), 1000)
     } else {
-      setError("Incorrect selection. Please try again.")
+      setError("选择错误，请重试")
       setSelectedTiles([])
+      // 3秒后自动清除错误
+      setTimeout(() => setError(""), 3000)
     }
   }
 
@@ -88,21 +90,10 @@ export default function PuzzleVerification({ onComplete }: PuzzleVerificationPro
     setVerified(false)
   }
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-slate-600">Loading verification...</p>
-        </div>
-      </div>
-    )
-  }
-
   if (!puzzle) {
     return (
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8">
-        <p className="text-red-600">{error || "Failed to load puzzle"}</p>
+        <p className="text-red-600">{error || "加载中..."}</p>
       </div>
     )
   }

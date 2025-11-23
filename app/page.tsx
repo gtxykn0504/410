@@ -1,20 +1,19 @@
 import Link from "next/link"
-import { FileText, Camera, Menu } from "lucide-react"
-import { PhotoDialog } from "@/components/photo-dialog"
+import { AppWindow, Camera, Menu } from "lucide-react"
+import { PhotoDialog, AppDialog } from "@/components/page-dialog"
 
 export default function HomePage() {
   // 单个项目组件定义
   const ReportProject = () => (
-    <Link
-      href="https://410report.ofhe.cn/"
-      className="group bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md"
-    >
-      <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-        <FileText className="w-8 h-8 mb-3" />
-        <h3 className="font-medium text-gray-900 mb-1">Report</h3>
-        <p className="text-gray-600 text-sm">每日总结文案生成器</p>
+    <AppDialog>
+      <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-md cursor-pointer">
+        <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+          <AppWindow className="w-8 h-8 mb-3" />
+          <h3 className="font-medium text-gray-900 mb-1">App</h3>
+          <p className="text-gray-600 text-sm">实用小软件</p>
+        </div>
       </div>
-    </Link>
+    </AppDialog>
   )
 
   const ContactProject = () => (

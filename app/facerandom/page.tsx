@@ -33,7 +33,7 @@ export default function FaceRandomSelectorPage() {
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">软件介绍</h2>
           <div className="space-y-4 text-gray-700">
             <p>
-              FaceRandomSelector 是一款人脸随机选择工具。软件采用opencv的人脸检测算法，能够快速准确地识别图片中的人脸，并提供高效的随机选择功能，帮助教师轻松实现课堂互动。
+              FaceRandomSelector 是一款人脸随机选择工具。软件采用opencv的人脸检测算法，能够快速准确地识别摄像头中的人脸，并提供高效的随机选择功能，帮助教师轻松实现课堂互动。
             </p>
             <div className="mt-6">
               <h2 className="text-lg font-medium text-gray-900 mb-3">主要特性</h2>

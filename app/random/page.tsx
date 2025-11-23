@@ -69,8 +69,8 @@ export default function RandomImagePage() {
   }, [fetchRandomImage])
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
-      <div className="max-w-4xl w-full space-y-8">
+    <main className="min-h-screen bg-white pt-8 sm:pt-16 pb-16 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto space-y-10">
         {/* 返回主页按钮 */}
         <Link 
             href="/"
@@ -81,9 +81,9 @@ export default function RandomImagePage() {
         </Link>
 
         {/* 标题区域 */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-3">
+            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-4">
               <div className="w-8 sm:w-12 h-1 bg-blue-500 rounded-full" />
               <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">随机图片</h1>
               <div className="w-8 sm:w-12 h-1 bg-blue-500 rounded-full" />
@@ -152,23 +152,23 @@ export default function RandomImagePage() {
         )}
 
         {/* Control Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 pt-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6">
           <button
             onClick={handleZoom}
             disabled={!imageUrl || isLoading || !!error || !imageLoaded}
-            className="flex items-center justify-center gap-2 px-4 py-3 sm:px-6 text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+            className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="font-medium text-sm sm:text-base">放大</span>
+            <ZoomIn className="w-5 h-5" />
+            <span className="font-medium">放大</span>
           </button>
           
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 px-4 py-3 sm:px-6 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+            className="flex items-center justify-center gap-2 px-6 py-3 text-white bg-blue-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw className={["w-4 h-4", "sm:w-5 sm:h-5"].filter(Boolean).join(" ")} />
-            <span className="font-medium text-sm sm:text-base">刷新</span>
+            <RefreshCw className="w-5 h-5" />
+            <span className="font-medium">刷新</span>
           </button>
         </div>
       </div>

@@ -68,11 +68,6 @@ export default function FaceRandomSelectorPage() {
             <span className="font-medium">下载安装包</span>
           </a>
         </div>
-
-        {/* 版本信息 */}
-        <div className="text-center text-gray-500 text-sm">
-          <p>当前版本 v3.3 | 发布日期: 2025年11月</p>
-        </div>
       </div>
     </main>
   )

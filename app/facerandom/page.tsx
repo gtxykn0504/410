@@ -21,7 +21,7 @@ export default function FaceRandomSelectorPage() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 sm:gap-4 mb-4">
               <div className="w-8 sm:w-12 h-1 bg-blue-500 rounded-full" />
-              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">FaceRandomSelector</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Face Random Selector</h1>
               <div className="w-8 sm:w-12 h-1 bg-blue-500 rounded-full" />
             </div>
             <p className="text-sm sm:text-base text-gray-500">人脸随机选择工具</p>
@@ -42,6 +42,12 @@ export default function FaceRandomSelectorPage() {
                 <li>简洁易用的用户界面</li>
                 <li>完全离线运行，保护隐私</li>
               </ul>
+            </div>
+            <div className="mt-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-3">开发说明</h2>
+              <p>
+              软件通过Python编写，通过nuitka打包成独立的可执行文件，用户无需安装Python环境即可使用。开发者也可自行下载源代码进行二次开发和定制。
+              </p>
             </div>
           </div>
         </div>

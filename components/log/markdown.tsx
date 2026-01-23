@@ -6,12 +6,12 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
 // 日志内容组件的 props 类型定义
-interface BlogPostContentProps {
+interface MarkdownProps {
   content: string
   title: string
 }
 
-export function BlogPostContent({ content, title }: BlogPostContentProps) {
+export function Markdown({ content, title }: MarkdownProps) {
   // 控制图片灯箱显示
   const [lightboxOpen, setLightboxOpen] = useState(false)
   // 当前所有图片列表

@@ -3,7 +3,7 @@ import path from "path"
 import matter from "gray-matter"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { BlogPostContent } from "@/components/log/blog-post-content"
+import { Markdown } from "@/components/log/markdown"
 import { LogSidebar } from "@/components/log/log-sidebar"
 import { LogNavMobile } from "@/components/log/log-nav-mobile"
 import { ArrowLeft } from "lucide-react"
@@ -112,7 +112,7 @@ export default async function LogPostPage({ params }: LogPageProps) {
 
             {/* 文章内容 */}
             <div className="prose prose-gray max-w-none mb-8">
-              <BlogPostContent content={post.content} title={post.title} />
+              <Markdown content={post.content} title={post.title} />
             </div>
             <div className="max-w-3xl mx-auto mt-6 bg-white pt-8">
               <ArtalkComment path={`/log/${post.slug}`} title={post.title} className="min-h-[300px] sm:min-h-[400px]" />

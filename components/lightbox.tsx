@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 
@@ -13,267 +13,410 @@ interface LightboxProps {
   onPrev?: () => void
 }
 
-export function Lightbox({ images, currentIndex, isOpen, onClose, onNext, onPrev }: LightboxProps) {
-  // 状态管理
-  const [scale, setScale] = useState(1)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  
-  // 使用 ref 稳定图片数组引用，确保不会重复
-  const imagesRef = useRef<string[]>([])
-  
+export function Lightbox({
+  images,
+  currentIndex,
+  isOpen,
+  onClose,
+  onNext,
+  onPrev,
+}: LightboxProps) {
   // DOM 引用
-  const imageRef = useRef<HTMLImageElement>(null)
-  const controlRef = useRef<HTMLDivElement>(null)
-  
-  // 手势状态
-  const dragStartRef = useRef({ x: 0, y: 0 })
-  const initialDistanceRef = useRef<number>(0)
-  const initialScaleRef = useRef<number>(1)
+  const wrapperRef = useRef<HTMLDivElement>(null) // 包裹图片的容器（绝对定位）
+  const imageRef = useRef<HTMLImageElement>(null) // 实际图片元素
+  const controlRef = useRef<HTMLDivElement>(null) // 底部控制栏
 
-  // 只在组件打开时更新图片数组，避免重复
+  // 指针数据（多点触控）
+  const pointersRef = useRef<Map<number, PointerData>>(new Map())
+  // 起始图片矩形（在每次手势开始时记录）
+  const startRectRef = useRef<DOMRect | null>(null)
+  // 起始中心点
+  const startCenterRef = useRef<{ x: number; y: number } | null>(null)
+  // 起始两指距离
+  const startDistanceRef = useRef<number>(0)
+  // 是否正在拖动（用于禁用过渡）
+  const isDraggingRef = useRef(false)
+
+  // 缩放限制
+  const MIN_SCALE = 0.5
+  const MAX_SCALE = 4
+
+  // 工具函数：获取当前图片容器的矩形
+  const getWrapperRect = useCallback(() => {
+    return wrapperRef.current?.getBoundingClientRect() || null
+  }, [])
+
+  // 工具函数：获取当前两指的中心点和距离
+  const getPinchData = useCallback(() => {
+    const pointers = Array.from(pointersRef.current.values())
+    if (pointers.length < 2) return null
+
+    const [p1, p2] = pointers
+    const center = {
+      x: (p1.currentX + p2.currentX) / 2,
+      y: (p1.currentY + p2.currentY) / 2,
+    }
+    const distance = Math.hypot(p1.currentX - p2.currentX, p1.currentY - p2.currentY)
+    return { center, distance }
+  }, [])
+
+  // 工具函数：更新图片位置和尺寸（直接操作样式）
+  const updateImageStyle = useCallback((left: number, top: number, width: number, height: number) => {
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+    wrapper.style.left = left + "px"
+    wrapper.style.top = top + "px"
+    wrapper.style.width = width + "px"
+    wrapper.style.height = height + "px"
+  }, [])
+
+  // 应用过渡（用于平滑动画）
+  const applyTransition = useCallback(() => {
+    const wrapper = wrapperRef.current
+    if (wrapper) wrapper.style.transition = "all 0.2s ease"
+  }, [])
+
+  // 移除过渡（用于拖拽时实时响应）
+  const removeTransition = useCallback(() => {
+    const wrapper = wrapperRef.current
+    if (wrapper) wrapper.style.transition = ""
+  }, [])
+
+  // 重置图片到适应屏幕的尺寸（居中）
+  const resetToFit = useCallback(() => {
+    const wrapper = wrapperRef.current
+    const img = imageRef.current
+    if (!wrapper || !img) return
+
+    // 等待图片自然尺寸加载完成
+    if (!img.naturalWidth) {
+      img.onload = () => resetToFit()
+      return
+    }
+
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const rate = 0.9
+
+    const maxWidth = viewportWidth * rate
+    const maxHeight = viewportHeight * rate
+    const imgRatio = img.naturalWidth / img.naturalHeight
+
+    let width, height
+    if (maxWidth / maxHeight > imgRatio) {
+      height = maxHeight
+      width = height * imgRatio
+    } else {
+      width = maxWidth
+      height = width / imgRatio
+    }
+
+    const left = (viewportWidth - width) / 2
+    const top = (viewportHeight - height) / 2
+
+    applyTransition()
+    updateImageStyle(left, top, width, height)
+    // 过渡结束后移除 transition（避免影响后续拖动）
+    const onTransitionEnd = () => {
+      wrapper.removeEventListener("transitionend", onTransitionEnd)
+      removeTransition()
+    }
+    wrapper.addEventListener("transitionend", onTransitionEnd)
+  }, [applyTransition, removeTransition, updateImageStyle])
+
+  // 打开时初始化位置
   useEffect(() => {
     if (isOpen) {
-      // 使用 Set 去重确保图片不会重复
-      const uniqueImages = [...new Set(images)]
-      imagesRef.current = uniqueImages
+      resetToFit()
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
     }
-  }, [isOpen, images])
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen, resetToFit])
 
-  // 重置变换状态
-  const resetTransform = useCallback(() => {
-    setScale(1)
-    setPosition({ x: 0, y: 0 })
-  }, [])
+  // 切换图片时重置位置
+  useEffect(() => {
+    if (isOpen) {
+      resetToFit()
+    }
+  }, [currentIndex, isOpen, resetToFit])
 
-  // 双击缩放处理
-  const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // --- 指针事件处理 ---
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
     e.stopPropagation()
-    setScale(scale === 1 ? 2 : 1)
-    setPosition({ x: 0, y: 0 })
-  }, [scale])
 
-  // 鼠标事件处理
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (scale <= 1) return
-    
-    e.preventDefault()
-    setIsDragging(true)
-    dragStartRef.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    }
-  }, [scale, position])
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || scale <= 1) return
-    
-    e.preventDefault()
-    setPosition({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y
+    // 开始拖拽，移除过渡
+    removeTransition()
+
+    pointersRef.current.set(e.pointerId, {
+      startX: e.clientX,
+      startY: e.clientY,
+      currentX: e.clientX,
+      currentY: e.clientY,
     })
-  }, [isDragging, scale])
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-  }, [])
-
-  // 触摸事件处理
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const touches = e.touches
-    
-    if (touches.length === 1 && scale > 1) {
-      setIsDragging(true)
-      dragStartRef.current = {
-        x: touches[0].clientX - position.x,
-        y: touches[0].clientY - position.y
-      }
-    } else if (touches.length === 2) {
-      const touch1 = touches[0]
-      const touch2 = touches[1]
-      initialDistanceRef.current = Math.hypot(
-        touch1.clientX - touch2.clientX,
-        touch1.clientY - touch2.clientY
-      )
-      initialScaleRef.current = scale
-      setIsDragging(false)
+    if (pointersRef.current.size === 1) {
+      const rect = wrapper.getBoundingClientRect()
+      startRectRef.current = rect
     }
-  }, [scale, position])
 
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const touches = e.touches
-    
-    if (touches.length === 1 && scale > 1) {
-      setPosition({
-        x: touches[0].clientX - dragStartRef.current.x,
-        y: touches[0].clientY - dragStartRef.current.y
-      })
-    } else if (touches.length === 2) {
-      const touch1 = touches[0]
-      const touch2 = touches[1]
-      const currentDistance = Math.hypot(
-        touch1.clientX - touch2.clientX,
-        touch1.clientY - touch2.clientY
-      )
-      
-      if (initialDistanceRef.current > 0) {
-        const scaleFactor = currentDistance / initialDistanceRef.current
-        const newScale = Math.max(1, Math.min(4, initialScaleRef.current * scaleFactor))
-        setScale(newScale)
+    if (pointersRef.current.size === 2) {
+      const pinch = getPinchData()
+      if (pinch) {
+        startCenterRef.current = pinch.center
+        startDistanceRef.current = pinch.distance
       }
     }
-  }, [scale])
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true
+    wrapper.setPointerCapture(e.pointerId)
+  }, [getPinchData, removeTransition])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
-    if (e.touches.length === 0) {
-      setIsDragging(false)
-      initialDistanceRef.current = 0
-    }
-  }, [])
+    e.stopPropagation()
 
-  // 键盘事件处理
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+
+    const pointer = pointersRef.current.get(e.pointerId)
+    if (!pointer) return
+
+    pointer.currentX = e.clientX
+    pointer.currentY = e.clientY
+
+    const pointersCount = pointersRef.current.size
+
+    // 单指拖动
+    if (pointersCount === 1 && startRectRef.current) {
+      const dx = e.clientX - pointer.startX
+      const dy = e.clientY - pointer.startY
+      const newLeft = startRectRef.current.left + dx
+      const newTop = startRectRef.current.top + dy
+      wrapper.style.left = newLeft + "px"
+      wrapper.style.top = newTop + "px"
+    }
+
+    // 双指缩放
+    if (pointersCount === 2) {
+      const pinch = getPinchData()
+      if (pinch && startCenterRef.current && startDistanceRef.current > 0 && startRectRef.current) {
+        const scale = pinch.distance / startDistanceRef.current
+        const newWidth = startRectRef.current.width * scale
+        const newHeight = startRectRef.current.height * scale
+
+        if (newWidth < 50 || newHeight < 50 || newWidth > window.innerWidth * 2) return
+
+        const centerShiftX = pinch.center.x - startCenterRef.current.x
+        const centerShiftY = pinch.center.y - startCenterRef.current.y
+        const newLeft = startRectRef.current.left + centerShiftX - (newWidth - startRectRef.current.width) * (pinch.center.x - startRectRef.current.left) / startRectRef.current.width
+        const newTop = startRectRef.current.top + centerShiftY - (newHeight - startRectRef.current.height) * (pinch.center.y - startRectRef.current.top) / startRectRef.current.height
+
+        updateImageStyle(newLeft, newTop, newWidth, newHeight)
+      }
+    }
+  }, [getPinchData, updateImageStyle])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    pointersRef.current.delete(e.pointerId)
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      wrapper.releasePointerCapture(e.pointerId)
+    }
+
+    if (pointersRef.current.size === 0) {
+      isDraggingRef.current = false
+      startRectRef.current = null
+      startCenterRef.current = null
+      startDistanceRef.current = 0
+      // 拖拽结束，恢复过渡（为后续滚轮或双击做准备）
+      applyTransition()
+    } else if (pointersRef.current.size === 1) {
+      const rect = wrapperRef.current?.getBoundingClientRect()
+      if (rect) {
+        startRectRef.current = rect
+        const remainingPointer = Array.from(pointersRef.current.values())[0]
+        remainingPointer.startX = remainingPointer.currentX
+        remainingPointer.startY = remainingPointer.currentY
+      }
+    }
+  }, [applyTransition])
+
+  // --- 滚轮缩放 ---
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+
+    const rect = wrapper.getBoundingClientRect()
+    const { left, top, width, height } = rect
+
+    let ratio = 1 + Math.abs(e.deltaY) / (e.ctrlKey ? 20 : 200)
+    if (e.deltaY > 0) ratio = 1 / ratio
+
+    const newWidth = width * ratio
+    const newHeight = height * ratio
+
+    if (newWidth < 50 || newHeight < 50 || newWidth > window.innerWidth * 2) return
+
+    const mouseX = e.clientX
+    const mouseY = e.clientY
+    const newLeft = left - (mouseX - left) * (ratio - 1)
+    const newTop = top - (mouseY - top) * (ratio - 1)
+
+    // 应用过渡实现平滑缩放
+    applyTransition()
+    updateImageStyle(newLeft, newTop, newWidth, newHeight)
+    // 过渡结束后移除 transition
+    const onTransitionEnd = () => {
+      wrapper.removeEventListener("transitionend", onTransitionEnd)
+      removeTransition()
+    }
+    wrapper.addEventListener("transitionend", onTransitionEnd)
+  }, [applyTransition, removeTransition, updateImageStyle])
+
+  // --- 双击缩放 ---
+  const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const wrapper = wrapperRef.current
+    const img = imageRef.current
+    if (!wrapper || !img) return
+
+    const rect = wrapper.getBoundingClientRect()
+    const { left, top, width, height } = rect
+
+    // 判断当前是否为适应尺寸（近似）
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const fitWidth = viewportWidth * 0.9
+    const fitHeight = viewportHeight * 0.9
+
+    if (width < fitWidth * 1.1 && height < fitHeight * 1.1) {
+      // 放大到 2 倍，以鼠标为中心
+      const newWidth = width * 2
+      const newHeight = height * 2
+      const newLeft = left - (e.clientX - left)
+      const newTop = top - (e.clientY - top)
+
+      applyTransition()
+      updateImageStyle(newLeft, newTop, newWidth, newHeight)
+    } else {
+      // 恢复适应尺寸
+      resetToFit()
+    }
+  }, [applyTransition, resetToFit, updateImageStyle])
+
+  // --- 键盘事件 ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return
 
       switch (e.key) {
         case "Escape":
-          scale > 1 ? resetTransform() : onClose()
+          onClose()
           break
         case "ArrowLeft":
           onPrev?.()
-          resetTransform()
           break
         case "ArrowRight":
           onNext?.()
-          resetTransform()
           break
       }
     }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose, onPrev, onNext])
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = "hidden"
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen, onClose, onNext, onPrev, resetTransform, scale])
-
-  // 点击外部区域关闭
+  // --- 点击外部关闭 ---
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    if (scale > 1) return
-    
-    const isImageClick = imageRef.current?.contains(e.target as Node)
-    const isControlClick = controlRef.current?.contains(e.target as Node)
-    
-    if (!isImageClick && !isControlClick) {
+    if (e.target === e.currentTarget) {
       onClose()
     }
-  }, [onClose, scale])
-
-  // 切换图片时重置变换
-  useEffect(() => {
-    if (isOpen) {
-      resetTransform()
-    }
-  }, [currentIndex, isOpen, resetTransform])
+  }, [onClose])
 
   if (!isOpen) return null
 
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-xs cursor-pointer"
+    <div
+      className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center"
       onClick={handleOverlayClick}
     >
-      {/* 图片内容区域 */}
-      <div className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-default">
-        <div
-          className={`relative flex items-center justify-center transition-transform duration-300 ease-out ${
-            isDragging ? 'cursor-grabbing' : scale > 1 ? 'cursor-grab' : 'cursor-default'
-          }`}
-          style={{ 
-            transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
-            transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-            touchAction: 'none'
-          }}
-          onDoubleClick={handleDoubleClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        >
-          <Image
-            ref={imageRef}
-            src={imagesRef.current[currentIndex] || ""}
-            alt="Lightbox image"
-            width={1600}
-            height={1200}
-            style={{ 
-              maxWidth: "95vw", 
-              maxHeight: "95vh", 
-              objectFit: "contain",
-              width: "auto",
-              height: "auto"
-            }}
-            className="rounded-sm select-none"
-            sizes="(max-width: 768px) 95vw, 90vw"
-            priority
-            draggable={false}
-          />
-        </div>
+      {/* 图片容器 */}
+      <div
+        ref={wrapperRef}
+        className="absolute will-change-[left,top,width,height] cursor-default"
+        style={{ touchAction: "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onWheel={handleWheel}
+        onDoubleClick={handleDoubleClick}
+      >
+        <Image
+          ref={imageRef}
+          src={images[currentIndex]}
+          alt="Lightbox image"
+          width={1600}
+          height={1200}
+          className="pointer-events-none select-none w-full h-full object-contain"
+          sizes="100vw"
+          priority
+          draggable={false}
+        />
       </div>
 
       {/* 底部控制栏 */}
-      <div 
+      <div
         ref={controlRef}
         className="absolute bottom-6 flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        {imagesRef.current.length > 1 ? (
+        {images.length > 1 ? (
           <div className="flex items-center justify-between px-6 py-3 bg-black/60 backdrop-blur-md rounded-full min-w-[300px]">
             <div className="text-white/90 text-sm font-medium">
-              {currentIndex + 1} / {imagesRef.current.length}
+              {currentIndex + 1} / {images.length}
             </div>
-            
             <div className="flex items-center gap-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onPrev?.()
-                  resetTransform()
-                }}
-                className="p-2 text-white/80 hover:text-white transition-colors"
-                aria-label="Previous image"
-                disabled={!onPrev}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onNext?.()
-                  resetTransform()
-                }}
-                className="p-2 text-white/80 hover:text-white transition-colors"
-                aria-label="Next image"
-                disabled={!onNext}
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+              {onPrev && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onPrev()
+                  }}
+                  className="p-2 text-white/80 hover:text-white transition-colors"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+              {onNext && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onNext()
+                  }}
+                  className="p-2 text-white/80 hover:text-white transition-colors"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
             </div>
-            
             <button
               onClick={onClose}
               className="p-2 text-white/80 hover:text-white transition-colors"
@@ -294,4 +437,11 @@ export function Lightbox({ images, currentIndex, isOpen, onClose, onNext, onPrev
       </div>
     </div>
   )
+}
+
+interface PointerData {
+  startX: number
+  startY: number
+  currentX: number
+  currentY: number
 }
